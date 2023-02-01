@@ -62,14 +62,17 @@ class GridWorld:
         flag = self.checktrans()
         if not flag:
             sys.exit("Transition is incorrect, quit")
+        else:
+            self.stactst()
     
-    def st2st(self):
+    def stactst(self):
         st2st = []
         for st in self.statespace:
             for act in self.A:
                 for st_ in self.stotrans[st][act].keys():
-                    st2st.append((st, st_))
-        self.st2st = st2st
+                    if (st, act, st_) not in st2st:
+                        st2st.append((st, act, st_))
+        self.stast = st2st
 
     
     def checktrans(self):
@@ -88,7 +91,8 @@ class GridWorld:
             self.G.append(st)
             for act in self.A:
                 self.stotrans[st][act] = {}
-                self.stotrans[st][act]["Sink"] = 1.0
+                self.stotrans[st][act][st] = 1.0
+        self.stactst()
 
         
     def addBarrier(self, Barrierlist):
@@ -98,56 +102,27 @@ class GridWorld:
             self.statespace.remove(st)
             
     def addU(self, Ulist):
-        for st in self.statespace:
-            if st not in Ulist:
+        for st in Ulist:
+            if st in self.statespace:
                 self.U.append(st)
         
-    
 
-
-def createGridWorldBarrier_new2():
-    gridworld = GridWorld(6, 6, 0.1)
-    goallist = [(3, 4), (5, 0)] 
-#    barrierlist = [(0, 1), (0, 2), (0, 3), (3, 1), (3, 2), (2, 2), (4, 2)]
-    barrierlist = []
+def CreateGridWorld(goallist):
+    gridworld = GridWorld(5, 5, 0.1)
+    # goallist = [(1, 4)]
+    barrierlist = [(0, 2), (2, 3), (3, 1)]
     gridworld.addBarrier(barrierlist)
-    fakelist = [(1, 4), (4, 5)] #case 1
-    # fakelist = [(0, 2), (5, 3)] #case 2
-    IDSlist = [(0, 4), (1, 2), (2, 3), (3, 3), (5, 4)]
-#    IDSlist = [(6, 5), (4, 5)]
-#    fakelist = [(4, 6), (7, 4)]
-    Ulist = []  #This U is the states that can place sensors
-    for i in range(6):
-        for j in range(2, 4):
+    Ulist = []
+    for i in range(5):
+        for j in range(1,3):
             Ulist.append((i, j))
     gridworld.addU(Ulist)
     gridworld.gettrans()
-    gridworld.addFake(fakelist)
     gridworld.addGoal(goallist)
-    gridworld.addIDS(IDSlist)
-#    V_0 = gridworld.init_preferred_attack_value()
-    # reward = gridworld.getreward_def(1)   #Cant use this as the initial reward
-    # reward = gridworld.initial_reward()
-    reward = gridworld.initial_reward_withoutDecoy()
-    reward = gridworld.initial_reward_manual([2.016, 1.826])
-    print(reward)
-#    print(reward)
-#    policy, V = gridworld.getpolicy(reward)
-    policy, V = gridworld.getpolicy_det(reward)
-#    policy = gridworld.randomPolicy()
-    reward_d = gridworld.getreward_def(1)
-    # print(reward_d)
-    print(V)
-    V_def = gridworld.policy_evaluation(policy, reward_d)
-    return gridworld, V_def, policy    
-
-
+    return gridworld
+   
     
     
 if __name__ == "__main__":
-#    gridworld, V, policy = createGridWorld()
-    gridworld, V_def, policy = createGridWorldBarrier_new3()
-    Z = gridworld.stVisitFre(policy)
-    Z_act = gridworld.stactVisitFre(policy)
-#    print(V_def[14], Z[20], Z[48])
-#    print(Z[35], Z[54])
+    goallist = [(1, 4)]
+    gridworld = CreateGridWorld(goallist)
