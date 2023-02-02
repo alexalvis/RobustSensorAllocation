@@ -22,7 +22,7 @@ def LP(k, h, m, M, mdplist, v_i):
     #V is the value under x configuration
     x = [model.add_var(var_type=BINARY) for i in range(st_len)]
     #x is the sensor placement configuration
-    w = [[model.add_var(lb = 0, ub = 1) for j in range(len(mdp.st2st))] for i in range(k)]
+    w = [[model.add_var(lb = 0, ub = 1) for j in range(len(mdp.stast))] for i in range(k)]
     U = mdp.U  #Read from mdp directly
     #v_i is the optimal value under different attackers, given as input
     model.objective = minimize(y)
@@ -41,19 +41,19 @@ def LP(k, h, m, M, mdplist, v_i):
         for j in range(stlen):
             #current state: j
             #next state: ns
-            if mdp.statespace[j] in G:
+            if mdp.statespace[j] in mdp.G:
                 model += V[i][j] == 1
         
             for a in mdp.A:
-                model += V[i][j] >= gamma * xsum(P[j][a][ns] * w[mdp.st2st.index((j, ns))] for ns in mdp.stotrans[j][a].keys())
+                model += V[i][j] >=  xsum(mdp.stotrans[mdp.statespace[j]][a][ns] * w[mdp.stast.index((mdp.statespace[j], a, ns))] for ns in mdp.stotrans[mdp.statespace[j]][a].keys())
             
-                for ns in mdp.stotrans[j][a].keys():
+                for ns in mdp.stotrans[mdp.statespace[j]][a].keys():
                     #index of (s, s'): k
-                    k = mdp.st2st.index((j, ns))
+                    k = mdp.stast.index((mdp.statespace[j], a, ns))
                     model += w[i][k] >= m * (1 - x[j])
                     model += w[i][k] <= M * (1 - x[j])
-                    model += w[i][k] - V[i][mdp.statespace.index(ns)] >= m * x[j]
-                    model += w[i][k] - V[i][mdp.statespace.index(ns)] <= M * x[j]
+                    model += w[i][k] - gamma * V[i][mdp.statespace.index(ns)] >= m * x[j]
+                    model += w[i][k] - gamma * V[i][mdp.statespace.index(ns)] <= M * x[j]
                 
     status = model.optimize()  # Set the maximal calculation time
     if status == OptimizationStatus.OPTIMAL:
@@ -94,7 +94,7 @@ def sub_solver(h, m, M, mdp):
             model += v[j] == 1
         
         for a in mdp.A:
-            model += v[j] >= gamma * xsum(mdp.stotrans[mdp.statespace[j]][a][ns] * w[mdp.stast.index((mdp.statespace[j], a, ns))] 
+            model += v[j] >=  xsum(mdp.stotrans[mdp.statespace[j]][a][ns] * w[mdp.stast.index((mdp.statespace[j], a, ns))] 
                                           for ns in mdp.stotrans[mdp.statespace[j]][a].keys())
         
             for ns in mdp.stotrans[mdp.statespace[j]][a].keys():
@@ -102,8 +102,8 @@ def sub_solver(h, m, M, mdp):
                 k = mdp.stast.index((mdp.statespace[j], a, ns))
                 model += w[k] >= m * (1 - x[j])
                 model += w[k] <= M * (1 - x[j])
-                model += w[k] - v[mdp.statespace.index(ns)] >= m * x[j]
-                model += w[k] - v[mdp.statespace.index(ns)] <= M * x[j]
+                model += w[k] - gamma * v[mdp.statespace.index(ns)] >= m * x[j]
+                model += w[k] - gamma * v[mdp.statespace.index(ns)] <= M * x[j]
     
     status = model.optimize()  # Set the maximal calculation time
     if status == OptimizationStatus.OPTIMAL:
@@ -129,8 +129,8 @@ def main(k, h, m, M):
 
 if __name__ == "__main__":
     k = 1  #Number of attacker types
-    h = 1  #Number of sensor constraints
-    m = 0  #Lower bound of big M method
+    h = 3  #Number of sensor constraints
+    m = -1  #Lower bound of big M method
     M = 1  #Upper bound of big M method
     # regret, ids_config = main(k, h, m, M)
     goallist1 = [(1, 4)]
