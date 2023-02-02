@@ -9,24 +9,26 @@ from mip import *
 import numpy as np
 import GridWorldV2  
 
-def LP(k, h, m, M, mdplist, v_i):
+def LP(num_att, h, m, M, mdplist, v_i):
     #k number of attackers, h number of sensors constraint
     #m lower bound of big M method, M upper bound of big M method
     model = Model(solver_name=GRB)
+    # model.Params.PoolSearchMode = 2
+    # model.setParam(GRB.Param.PoolSearchMode, 2)
     gamma = 0.95
     mdp = mdplist[0]
     stlen = len(mdp.statespace)
-    init = np.zeros(stlen)
+    init = mdplist[0].init
     y = model.add_var() #y is regret
-    V = [[model.add_var(lb = 0, ub = 1) for j in range(stlen)] for i in range(k)]
+    V = [[model.add_var(lb = 0, ub = 1) for j in range(stlen)] for i in range(num_att)]
     #V is the value under x configuration
-    x = [model.add_var(var_type=BINARY) for i in range(st_len)]
+    x = [model.add_var(var_type=BINARY) for i in range(stlen)]
     #x is the sensor placement configuration
-    w = [[model.add_var(lb = 0, ub = 1) for j in range(len(mdp.stast))] for i in range(k)]
+    w = [[model.add_var(lb = 0, ub = 1) for j in range(len(mdplist[i].stast))] for i in range(num_att)]
     U = mdp.U  #Read from mdp directly
     #v_i is the optimal value under different attackers, given as input
     model.objective = minimize(y)
-    for i in range(k):
+    for i in range(num_att):
         #minimize regret
         model += y - (xsum(init[j] * V[i][j] for j in range(stlen)) - v_i[i]) >= 0
     #State outside U can not be sensors
@@ -35,7 +37,7 @@ def LP(k, h, m, M, mdplist, v_i):
             model += x[j] == 0
     #number of ids is limited
     model += xsum(x[j] for j in range(stlen)) <= h
-    for i in range(k):
+    for i in range(num_att):
         mdp = mdplist[i]
         #get the corresponding mdp
         for j in range(stlen):
@@ -45,7 +47,7 @@ def LP(k, h, m, M, mdplist, v_i):
                 model += V[i][j] == 1
         
             for a in mdp.A:
-                model += V[i][j] >=  xsum(mdp.stotrans[mdp.statespace[j]][a][ns] * w[mdp.stast.index((mdp.statespace[j], a, ns))] for ns in mdp.stotrans[mdp.statespace[j]][a].keys())
+                model += V[i][j] >=  xsum(mdp.stotrans[mdp.statespace[j]][a][ns] * w[i][mdp.stast.index((mdp.statespace[j], a, ns))] for ns in mdp.stotrans[mdp.statespace[j]][a].keys())
             
                 for ns in mdp.stotrans[mdp.statespace[j]][a].keys():
                     #index of (s, s'): k
@@ -55,10 +57,12 @@ def LP(k, h, m, M, mdplist, v_i):
                     model += w[i][k] - gamma * V[i][mdp.statespace.index(ns)] >= m * x[j]
                     model += w[i][k] - gamma * V[i][mdp.statespace.index(ns)] <= M * x[j]
                 
-    status = model.optimize()  # Set the maximal calculation time
+    status = model.optimize(max_solutions = 10)  # Set the maximal calculation time
     if status == OptimizationStatus.OPTIMAL:
         print("The model objective is:", model.objective_value)
         x_res = [x[i].x for i in range(stlen)]
+        # for i in range(num_att):
+            # print(xsum(init[j] * V[i][j].x for j in range(stlen)) - v_i[i])
     elif status == OptimizationStatus.FEASIBLE:
         print('sol.cost {} found, best possible: {}'.format(model.objective_value, model.objective_bound))
     elif status == OptimizationStatus.NO_SOLUTION_FOUND:
@@ -72,8 +76,7 @@ def sub_solver(h, m, M, mdp):
     #mdp is the current mdp
     model = Model()
     stlen = len(mdp.statespace)
-    init = np.zeros(stlen)
-    init[9] = 1
+    init = mdp.init
     gamma = 0.95
     v = [model.add_var(lb=0, ub=1) for i in range(stlen)]  # V(s)
     x = [model.add_var(var_type=BINARY) for i in range(stlen)]  #  x(s)
@@ -128,14 +131,21 @@ def main(k, h, m, M):
     return regret, ids_config
 
 if __name__ == "__main__":
-    k = 1  #Number of attacker types
-    h = 3  #Number of sensor constraints
+    num_att = 2  #Number of attacker types
+    h = 2  #Number of sensor constraints
     m = -1  #Lower bound of big M method
     M = 1  #Upper bound of big M method
     # regret, ids_config = main(k, h, m, M)
     goallist1 = [(1, 4)]
+    goallist2 = [(4, 4)]
     mdp1 = GridWorldV2.CreateGridWorld(goallist1)
+    mdp2 = GridWorldV2.CreateGridWorld(goallist2)
     v1, x1, v_spec = sub_solver(h, m, M, mdp1)
+    v2, x2, v_spec = sub_solver(h, m, M, mdp2)
+    mdplist = [mdp1, mdp2]
+    vlist = [v1, v2]
+    regret, x_regret = LP(num_att, h, m, M, mdplist, vlist)
+    
     
     
     

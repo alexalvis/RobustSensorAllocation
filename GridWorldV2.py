@@ -17,7 +17,7 @@ class GridWorld:
         self.G = []
         self.IDS = []
         self.U = []
-
+        
     def getstate(self):
         statespace = []
         for i in range(self.width):
@@ -81,7 +81,7 @@ class GridWorld:
                 if abs(sum(self.stotrans[st][act].values())-1) > 0.01:
                     print("st is:", st, " act is:", act, " sum is:", sum(self.stotrans[st][act].values()))
                     return False
-        print("Transition is correct")
+        # print("Transition is correct")
         return True
 
     
@@ -105,6 +105,11 @@ class GridWorld:
         for st in Ulist:
             if st in self.statespace:
                 self.U.append(st)
+                
+    def init_dist(self, init_list):
+        self.init = np.zeros(len(self.statespace))
+        for st in init_list:
+            self.init[self.statespace.index(st)] = 1/len(init_list)
         
 
 def CreateGridWorld(goallist):
@@ -119,6 +124,8 @@ def CreateGridWorld(goallist):
     gridworld.addU(Ulist)
     gridworld.gettrans()
     gridworld.addGoal(goallist)
+    init_list = [(2, 0)]
+    gridworld.init_dist(init_list)
     return gridworld
    
     
