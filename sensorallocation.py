@@ -132,7 +132,7 @@ def main(k, h, m, M):
 
 if __name__ == "__main__":
     num_att = 2  #Number of attacker types
-    h = 2  #Number of sensor constraints
+    h = 1  #Number of sensor constraints
     m = -1  #Lower bound of big M method
     M = 1  #Upper bound of big M method
     # regret, ids_config = main(k, h, m, M)
