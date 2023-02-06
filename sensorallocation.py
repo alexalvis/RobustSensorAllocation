@@ -9,7 +9,7 @@ from mip import *
 import numpy as np
 import GridWorldV2  
 
-def LP(num_att, h, m, M, mdplist, v_i):
+def LP(num_att, h, m, M, mdplist, v_i, r_i):
     #k number of attackers, h number of sensors constraint
     #m lower bound of big M method, M upper bound of big M method
     model = Model(solver_name=GRB)
@@ -44,7 +44,7 @@ def LP(num_att, h, m, M, mdplist, v_i):
             #current state: j
             #next state: ns
             if mdp.statespace[j] in mdp.G:
-                model += V[i][j] == 1
+                model += V[i][j] == r_i[i]
         
             for a in mdp.A:
                 model += V[i][j] >=  xsum(mdp.stotrans[mdp.statespace[j]][a][ns] * w[i][mdp.stast.index((mdp.statespace[j], a, ns))] for ns in mdp.stotrans[mdp.statespace[j]][a].keys())
@@ -132,7 +132,7 @@ def main(k, h, m, M):
 
 if __name__ == "__main__":
     num_att = 2  #Number of attacker types
-    h = 1  #Number of sensor constraints
+    h = 2  #Number of sensor constraints
     m = -1  #Lower bound of big M method
     M = 1  #Upper bound of big M method
     # regret, ids_config = main(k, h, m, M)
@@ -144,7 +144,8 @@ if __name__ == "__main__":
     v2, x2, v_spec = sub_solver(h, m, M, mdp2)
     mdplist = [mdp1, mdp2]
     vlist = [v1, v2]
-    regret, x_regret = LP(num_att, h, m, M, mdplist, vlist)
+    reward = [1, 0.95]
+    regret, x_regret = LP(num_att, h, m, M, mdplist, vlist, reward)
     
     
     

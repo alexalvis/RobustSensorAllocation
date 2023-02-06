@@ -115,7 +115,7 @@ class GridWorld:
 def CreateGridWorld(goallist):
     gridworld = GridWorld(5, 5, 0.1)
     # goallist = [(1, 4)]
-    barrierlist = [(0, 2), (2, 3), (3, 1)]
+    barrierlist = [(2, 3), (3, 1)]
     gridworld.addBarrier(barrierlist)
     Ulist = []
     for i in range(5):
@@ -124,7 +124,7 @@ def CreateGridWorld(goallist):
     gridworld.addU(Ulist)
     gridworld.gettrans()
     gridworld.addGoal(goallist)
-    init_list = [(2, 0)]
+    init_list = [(1, 0)]
     gridworld.init_dist(init_list)
     return gridworld
    
