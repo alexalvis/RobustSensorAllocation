@@ -22,6 +22,7 @@ def LP(mdp, h):
     U = mdp.U
     R_d = np.zeros(st_len * act_len)
     R_i = np.zeros(st_len * act_len)
+    init = mdp.init
     Z = 2   #Constant used in McCormick in equality
     #maximize the defender's reward
     model.objective = maximize(xsum(R_d[i] * x[i] for i in range(st_len * act_len)))
@@ -31,6 +32,7 @@ def LP(mdp, h):
     
     #Number of sensors constraint
     model += xsum(y[j] for j in range(stlen)) <= h
+    
     #constraint for w, McCormick inequality
     for i in range(st_len):
         for j in range(act_len):
@@ -44,5 +46,13 @@ def LP(mdp, h):
         model += lmd[i] >= 0
         model += x[i] >= 0
     
-    for i in range(stlen):
-        model += xum(x[i * act_len + j] for j in range(act_len)) - gamma * xsum()
+    for i in range(st_len):
+        model += xum(x[i * act_len + j] for j in range(act_len)) - gamma * xsum(P[j // act_len][j % act_len][i] * x[j] for j in range(st_len)) + \
+        gamma * xsum(P[j // act_len][j % act_len][i] * w[j] for j in range(st_len)) - init[i] == 0
+    
+    for i in range(st_len * act_len):
+        model += -R_i[i] + lmd[i] + (something) == 0
+    
+if __name__ == "__main__":
+    
+    
