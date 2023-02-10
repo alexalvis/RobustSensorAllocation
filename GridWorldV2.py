@@ -110,6 +110,13 @@ class GridWorld:
         self.init = np.zeros(len(self.statespace))
         for st in init_list:
             self.init[self.statespace.index(st)] = 1/len(init_list)
+            
+    def ChangeGoalTrans(self):  #The goal transiton is default to be a self loop, use this function to change it to go to Sink State
+        for st in self.G:
+            for act in self.A:
+                self.stotrans[st][act] = {}
+                self.stotrans[st][act]["Sink"] = 1.0
+        self.stactst()
         
 
 def CreateGridWorld(goallist):
@@ -133,3 +140,4 @@ def CreateGridWorld(goallist):
 if __name__ == "__main__":
     goallist = [(1, 4)]
     gridworld = CreateGridWorld(goallist)
+    # gridworld.ChangeGoalTrans()
