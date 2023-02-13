@@ -63,8 +63,8 @@ def LP(num_att, h, m, M, mdplist, v_i, r_i):
         x_res = [x[i].x for i in range(stlen)]
         for i in range(num_att):
             print(xsum(init[j] * V[i][j].x for j in range(stlen)) - v_i[i])
-        for j in range(stlen):
-            print(V[1][j].x)
+        # for j in range(stlen):
+            # print(V[1][j].x)
     elif status == OptimizationStatus.FEASIBLE:
         print('sol.cost {} found, best possible: {}'.format(model.objective_value, model.objective_bound))
     elif status == OptimizationStatus.NO_SOLUTION_FOUND:
@@ -76,7 +76,7 @@ def LP(num_att, h, m, M, mdplist, v_i, r_i):
 def sub_solver(h, m, M, mdp, reward):
     #h number of sensors constraint, m lower bound of big M, M upper bound of big M
     #mdp is the current mdp
-    model = Model(solver_name=GRB)
+    model = Model(solver_name=CBC)
     stlen = len(mdp.statespace)
     init = mdp.init
     gamma = 0.95
@@ -99,7 +99,7 @@ def sub_solver(h, m, M, mdp, reward):
             model += v[j] == reward
         
         for a in mdp.A:
-            model += v[j] >=  xsum(mdp.stotrans[mdp.statespace[j]][a][ns] * w[mdp.stast.index((mdp.statespace[j], a, ns))] 
+            model += v[j] >=  xsum(gamma * mdp.stotrans[mdp.statespace[j]][a][ns] * w[mdp.stast.index((mdp.statespace[j], a, ns))] 
                                           for ns in mdp.stotrans[mdp.statespace[j]][a].keys())
         
             for ns in mdp.stotrans[mdp.statespace[j]][a].keys():
@@ -107,8 +107,8 @@ def sub_solver(h, m, M, mdp, reward):
                 k = mdp.stast.index((mdp.statespace[j], a, ns))
                 model += w[k] >= m * (1 - x[j])
                 model += w[k] <= M * (1 - x[j])
-                model += w[k] - gamma * v[mdp.statespace.index(ns)] >= m * x[j]
-                model += w[k] - gamma * v[mdp.statespace.index(ns)] <= M * x[j]
+                model += w[k] -  v[mdp.statespace.index(ns)] >= m * x[j]
+                model += w[k] -  v[mdp.statespace.index(ns)] <= M * x[j]
     
     status = model.optimize()  # Set the maximal calculation time
     if status == OptimizationStatus.OPTIMAL:
@@ -164,23 +164,23 @@ def main(k, h, m, M):
 if __name__ == "__main__":
     num_att = 2  #Number of attacker types
     h = 2  #Number of sensor constraints
-    m = -1  #Lower bound of big M method
-    M = 3  #Upper bound of big M method
+    m = -10  #Lower bound of big M method
+    M = 10  #Upper bound of big M method
     # regret, ids_config = main(k, h, m, M)
     goallist1 = [(1, 4)]
     goallist2 = [(4, 4)]
     mdp1 = GridWorldV2.CreateGridWorld(goallist1)
     mdp2 = GridWorldV2.CreateGridWorld(goallist2)
     v1, x1, v_spec_1 = sub_solver(h, m, M, mdp1, 3)
-    v2, x2, v_spec_2 = sub_solver(h, m, M, mdp2, 3)
+    v2, x2, v_spec_2 = sub_solver(h, m, M, mdp2, 5)
     mdplist = [mdp1, mdp2]
     vlist = [v1, v2]
-    reward = [3, 3]
+    reward = [3, 5]
     regret, x_regret = LP(num_att, h, m, M, mdplist, vlist, reward)
-    x1_count = np.zeros(23)
-    x1_count[2] = 1
-    x1_count[6] = 1
-    objectValue, V_spec = evaluate_sensor(mdp1, x1_count, 3)
+    # x1_count = np.zeros(23)
+    # x1_count[2] = 1
+    # x1_count[6] = 1
+    # objectValue, V_spec = evaluate_sensor(mdp1, x1_count, 1)
     
     
     
