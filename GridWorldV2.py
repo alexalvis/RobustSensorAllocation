@@ -118,6 +118,8 @@ class GridWorld:
                 self.stotrans[st][act]["Sink"] = 1.0
         self.stactst()
         
+    def evalueate_sensor():
+        
 
 def CreateGridWorld(goallist):
     gridworld = GridWorld(5, 5, 0.1)
