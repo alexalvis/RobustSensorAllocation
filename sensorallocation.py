@@ -61,8 +61,8 @@ def LP(num_att, h, m, M, mdplist, v_i, r_i):
     if status == OptimizationStatus.OPTIMAL:
         print("The model objective is:", model.objective_value)
         x_res = [x[i].x for i in range(stlen)]
-        # for i in range(num_att):
-            # print(xsum(init[j] * V[i][j].x for j in range(stlen)) - v_i[i])
+        for i in range(num_att):
+            print(xsum(init[j] * V[i][j].x for j in range(stlen)) - v_i[i])
     elif status == OptimizationStatus.FEASIBLE:
         print('sol.cost {} found, best possible: {}'.format(model.objective_value, model.objective_bound))
     elif status == OptimizationStatus.NO_SOLUTION_FOUND:
