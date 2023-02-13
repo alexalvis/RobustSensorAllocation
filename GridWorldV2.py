@@ -119,6 +119,8 @@ class GridWorld:
         self.stactst()
         
     def evalueate_sensor():
+        #Evaluate session is implemented in MIP part
+        pass
         
 
 def CreateGridWorld(goallist):
