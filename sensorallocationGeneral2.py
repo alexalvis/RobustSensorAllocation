@@ -15,7 +15,8 @@ def LP(mdp, h, r_d, r_i):
     st_len = len(mdp.statespace)
     act_len_att = len(mdp.A)
     act_len_def = 2
-    Z = 2
+    Z1 = -100
+    Z2 = 100
     #Attacker and defender actions are binary
     pi1 = [[[model.add_var(var_type=BINARY) for i in range(act_len_def)] for j in range(act_len_att)] for k in range(st_len)] #Defender's policy 
     pi2 = [[model.add_var(var_type=BINARY) for i in range(act_len_att)] for j in range(st_len)] #Attacker's policy
@@ -28,13 +29,14 @@ def LP(mdp, h, r_d, r_i):
     R_d = AssignReward(mdp.G, mdp.statespace, act_len_def, act_len_att, r_d)
     R_i = AssignReward(mdp.G, mdp.statespace, act_len_def, act_len_att, r_i)
     init = mdp.init
-    model.objective = minimize(xsum(init[i] * -U1[i] for i in range(st_len)))
+    model.objective = maximize(xsum(init[i] * U1[i] for i in range(st_len)))
     
     #If the state not in U, then defender takes action 0
     for i in range(st_len):
         if mdp.statespace[i] not in U:
             for j in range(act_len_att):
                 model += pi1[i][j][0] == 1
+                model += pi1[i][j][1] == 0
     #Only one action can be chosen in each state for both attacker and defender
     for i in range(st_len):
         model += xsum(pi2[i][j] for j in range(act_len_att)) == 1
@@ -49,10 +51,10 @@ def LP(mdp, h, r_d, r_i):
     for i in range(st_len):
         for act_att in range(act_len_att):
             model += U1[i] - xsum(pi1[i][act_att][act_def] * R_d[i][act_def][act_att] for act_def in range(act_len_def)) \
-            - gamma * xsum(w1[i][act_def][act_att] for act_def in range(act_len_def)) - (1- pi2[i][act_att]) * Z <= 0
+            - gamma * xsum(w1[i][act_def][act_att] for act_def in range(act_len_def)) - (1- pi2[i][act_att]) * Z2 <= 0
             
             model += U2[i] - xsum(pi1[i][act_att][act_def] * R_i[i][act_def][act_att] for act_def in range(act_len_def)) \
-            - gamma * xsum(w2[i][act_def][act_att] for act_def in range(act_len_def)) - (1- pi2[i][act_att]) * Z <= 0
+            - gamma * xsum(w2[i][act_def][act_att] for act_def in range(act_len_def)) - (1- pi2[i][act_att]) * Z2 <= 0
             
             model += U2[i] - xsum(pi1[i][act_att][act_def] * R_i[i][act_def][act_att] for act_def in range(act_len_def)) \
             - gamma * xsum(w2[i][act_def][act_att] for act_def in range(act_len_def)) >= 0
@@ -61,15 +63,15 @@ def LP(mdp, h, r_d, r_i):
     for i in range(st_len):
         for act_def in range(act_len_def):
             for act_att in range(act_len_att):
-                model += w1[i][act_def][act_att] - xsum(P[i][act_def][act_att][j] * U1[j] for j in range(st_len)) + Z * (1 - pi1[i][act_att][act_def]) >= 0
-                model += w1[i][act_def][act_att] - xsum(P[i][act_def][act_att][j] * U1[j] for j in range(st_len)) - Z * (1 - pi1[i][act_att][act_def]) <= 0
-                model += w1[i][act_def][act_att] + Z * pi1[i][act_att][act_def] >= 0
-                model += w1[i][act_def][act_att] - Z * pi1[i][act_att][act_def] <= 0
+                model += w1[i][act_def][act_att] - xsum(P[i][act_def][act_att][j] * U1[j] for j in range(st_len)) >= Z1 * (1 - pi1[i][act_att][act_def])
+                model += w1[i][act_def][act_att] - xsum(P[i][act_def][act_att][j] * U1[j] for j in range(st_len)) <= Z2 * (1 - pi1[i][act_att][act_def])
+                model += w1[i][act_def][act_att] >= Z1 * pi1[i][act_att][act_def]
+                model += w1[i][act_def][act_att] <= Z2 * pi1[i][act_att][act_def] 
                 
-                model += w2[i][act_def][act_att] - xsum(P[i][act_def][act_att][j] * U2[j] for j in range(st_len)) + Z * (1 - pi1[i][act_att][act_def]) >= 0
-                model += w2[i][act_def][act_att] - xsum(P[i][act_def][act_att][j] * U2[j] for j in range(st_len)) - Z * (1 - pi1[i][act_att][act_def]) <= 0
-                model += w2[i][act_def][act_att] + Z * pi1[i][act_att][act_def] >= 0
-                model += w2[i][act_def][act_att] - Z * pi1[i][act_att][act_def] <= 0
+                model += w2[i][act_def][act_att] - xsum(P[i][act_def][act_att][j] * U2[j] for j in range(st_len)) >= Z1 * (1 - pi1[i][act_att][act_def])
+                model += w2[i][act_def][act_att] - xsum(P[i][act_def][act_att][j] * U2[j] for j in range(st_len)) <= Z2 * (1 - pi1[i][act_att][act_def])
+                model += w2[i][act_def][act_att] >= Z1 * pi1[i][act_att][act_def]
+                model += w2[i][act_def][act_att] <= Z2 * pi1[i][act_att][act_def]
     
     status = model.optimize()  # Set the maximal calculation time
     if status == OptimizationStatus.OPTIMAL:
