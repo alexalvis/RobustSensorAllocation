@@ -10,15 +10,14 @@ import numpy as np
 import GridWorldV2
 
 def LP(mdp, h, r_d, r_i):
-    model = Model(solver_name=GRB)
-    gamma = 0.95
+    model = Model()
+    gamma = 1
     st_len = len(mdp.statespace)
     act_len_att = len(mdp.A)
     act_len_def = 2
-    Z1 = -100
-    Z2 = 100
+    Z = 100000
     #Attacker and defender actions are binary
-    pi1 = [[[model.add_var(var_type=BINARY) for i in range(act_len_def)] for j in range(act_len_att)] for k in range(st_len)] #Defender's policy 
+    pi1 = [[model.add_var(var_type=BINARY) for i in range(act_len_def)] for j in range(st_len)] #Defender's policy
     pi2 = [[model.add_var(var_type=BINARY) for i in range(act_len_att)] for j in range(st_len)] #Attacker's policy
     U1 = [model.add_var() for i in range(st_len)] #Defender's utility
     U2 = [model.add_var() for i in range(st_len)] #Attacker's Utility
@@ -27,51 +26,64 @@ def LP(mdp, h, r_d, r_i):
     U = mdp.U
     P = transfer_P(mdp)
     R_d = AssignReward(mdp.G, mdp.statespace, act_len_def, act_len_att, r_d)
+    # print(R_d[9])
     R_i = AssignReward(mdp.G, mdp.statespace, act_len_def, act_len_att, r_i)
+    # print(R_i[9])
     init = mdp.init
     model.objective = maximize(xsum(init[i] * U1[i] for i in range(st_len)))
+    model.infeas_tol = 1e-3
     
     #If the state not in U, then defender takes action 0
     for i in range(st_len):
         if mdp.statespace[i] not in U:
-            for j in range(act_len_att):
-                model += pi1[i][j][0] == 1
-                model += pi1[i][j][1] == 0
+                model += pi1[i][0] == 1
+                model += pi1[i][1] == 0
+
     #Only one action can be chosen in each state for both attacker and defender
     for i in range(st_len):
         model += xsum(pi2[i][j] for j in range(act_len_att)) == 1
     
     for i in range(st_len):
-        for j in range(act_len_att):
-            model += xsum(pi1[i][j][k] for k in range(act_len_def)) == 1
+        model += xsum(pi1[i][k] for k in range(act_len_def)) == 1
     #Number of sensors constraint
-    model += xsum(pi1[i][j][1] for i in range(st_len) for j in range(act_len_att)) <= h
+    model += xsum(pi1[i][1] for i in range(st_len)) <= h
     
     #Utility Constraint
     for i in range(st_len):
-        for act_att in range(act_len_att):
-            model += U1[i] - xsum(pi1[i][act_att][act_def] * R_d[i][act_def][act_att] for act_def in range(act_len_def)) \
-            - gamma * xsum(w1[i][act_def][act_att] for act_def in range(act_len_def)) - (1- pi2[i][act_att]) * Z2 <= 0
+        if mdp.statespace[i] not in mdp.G:
+            for act_att in range(act_len_att):
+                model += U1[i] - xsum(pi1[i][act_def] * R_d[i][act_def][act_att] + gamma * w1[i][act_def][act_att] for act_def in range(act_len_def)) \
+                         <= (1- pi2[i][act_att]) * Z
             
-            model += U2[i] - xsum(pi1[i][act_att][act_def] * R_i[i][act_def][act_att] for act_def in range(act_len_def)) \
-            - gamma * xsum(w2[i][act_def][act_att] for act_def in range(act_len_def)) - (1- pi2[i][act_att]) * Z2 <= 0
+                model += U2[i] - xsum(pi1[i][act_def] * R_i[i][act_def][act_att] + gamma * w2[i][act_def][act_att] for act_def in range(act_len_def)) \
+                         <= (1- pi2[i][act_att]) * Z
             
-            model += U2[i] - xsum(pi1[i][act_att][act_def] * R_i[i][act_def][act_att] for act_def in range(act_len_def)) \
-            - gamma * xsum(w2[i][act_def][act_att] for act_def in range(act_len_def)) >= 0
+                model += U2[i] - xsum(pi1[i][act_def] * R_i[i][act_def][act_att] + gamma * w2[i][act_def][act_att] for act_def in range(act_len_def)) \
+                         >= 0
     
     #Replacement of w1 and w2
     for i in range(st_len):
-        for act_def in range(act_len_def):
-            for act_att in range(act_len_att):
-                model += w1[i][act_def][act_att] - xsum(P[i][act_def][act_att][j] * U1[j] for j in range(st_len)) >= Z1 * (1 - pi1[i][act_att][act_def])
-                model += w1[i][act_def][act_att] - xsum(P[i][act_def][act_att][j] * U1[j] for j in range(st_len)) <= Z2 * (1 - pi1[i][act_att][act_def])
-                model += w1[i][act_def][act_att] >= Z1 * pi1[i][act_att][act_def]
-                model += w1[i][act_def][act_att] <= Z2 * pi1[i][act_att][act_def] 
+        if mdp.statespace[i] not in mdp.G:
+            for act_def in range(act_len_def):
+                for act_att in range(act_len_att):
+                    model += w1[i][act_def][act_att] >= xsum(P[i][act_def][act_att][j] * U1[j] for j in range(st_len)) - Z * (1 - pi1[i][act_def])
+                    model += w1[i][act_def][act_att] <= xsum(P[i][act_def][act_att][j] * U1[j] for j in range(st_len)) + Z * (1 - pi1[i][act_def])
+                    model += w1[i][act_def][act_att] >= -Z * pi1[i][act_def]
+                    model += w1[i][act_def][act_att] <= Z * pi1[i][act_def]
                 
-                model += w2[i][act_def][act_att] - xsum(P[i][act_def][act_att][j] * U2[j] for j in range(st_len)) >= Z1 * (1 - pi1[i][act_att][act_def])
-                model += w2[i][act_def][act_att] - xsum(P[i][act_def][act_att][j] * U2[j] for j in range(st_len)) <= Z2 * (1 - pi1[i][act_att][act_def])
-                model += w2[i][act_def][act_att] >= Z1 * pi1[i][act_att][act_def]
-                model += w2[i][act_def][act_att] <= Z2 * pi1[i][act_att][act_def]
+                    model += w2[i][act_def][act_att] >= xsum(P[i][act_def][act_att][j] * U2[j] for j in range(st_len)) - Z * (1 - pi1[i][act_def])
+                    model += w2[i][act_def][act_att] <= xsum(P[i][act_def][act_att][j] * U2[j] for j in range(st_len)) + Z * (1 - pi1[i][act_def])
+                    model += w2[i][act_def][act_att] >= -Z * pi1[i][act_def]
+                    model += w2[i][act_def][act_att] <= Z * pi1[i][act_def]
+
+    for i in range(st_len):
+        if mdp.statespace[i] in mdp.G:
+            model += U1[i] == -100
+            model += U2[i] == 100
+            for act_def in range(act_len_def):
+                for act_att in range(act_len_att):
+                    model += w1[i][act_def][act_att] == 0
+                    model += w2[i][act_def][act_att] == 0
     
     status = model.optimize()  # Set the maximal calculation time
     if status == OptimizationStatus.OPTIMAL:
@@ -83,10 +95,9 @@ def LP(mdp, h, r_d, r_i):
         print('no feasible solution found, lower bound is: {}'.format(model.objective_bound))
     else:
         print("The model objective is:", model.objective_value)
-    return model.objective_value, sensorplace
+    return model.objective_value
 
 def transfer_P(mdp):
-    P = mdp.stotrans
     st_len = len(mdp.statespace)
     att_act_len = len(mdp.A)
     P_trans = np.zeros((st_len, 2, att_act_len, st_len))
@@ -108,7 +119,7 @@ def AssignReward(G, statespace, actiondef, actionatt, reward):
         for act_d in range(actiondef):
             Reward[i][act_d] = {}
             for act_a in range(actionatt):
-                if state in G:
+                if state in G and act_d == 0:
                     Reward[i][act_d][act_a] = reward
                 else:
                     Reward[i][act_d][act_a] = 0
@@ -118,14 +129,14 @@ def main():
     goallist = [(1, 4)]
     gridworld = GridWorldV2.CreateGridWorld(goallist)
     gridworld.ChangeGoalTrans()
-    h = 10 #Number of sensors allocation
-    r_d = -1 #Defender's reward
-    r_i = 1 #Attacker's reward
-    DefenderValue, sensorplace = LP(gridworld, h, r_d, r_i)
-    return DefenderValue, sensorplace
+    h = 2 #Number of sensors allocation
+    r_d = -100 #Defender's reward
+    r_i = 100 #Attacker's reward
+    DefenderValue = LP(gridworld, h, r_d, r_i)
+    return DefenderValue
 
 if __name__ == "__main__":
-    DefenderValue, sensorplace = main()
+    DefenderValue = main()
     
     
                 

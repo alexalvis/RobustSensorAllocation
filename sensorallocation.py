@@ -171,7 +171,7 @@ if __name__ == "__main__":
     goallist2 = [(4, 4)]
     mdp1 = GridWorldV2.CreateGridWorld(goallist1)
     mdp2 = GridWorldV2.CreateGridWorld(goallist2)
-    v1, x1, v_spec_1 = sub_solver(h, m, M, mdp1, 3)
+    v1, x1, v_spec_1 = sub_solver(h, m, M, mdp1, 1)
     v2, x2, v_spec_2 = sub_solver(h, m, M, mdp2, 5)
     mdplist = [mdp1, mdp2]
     vlist = [v1, v2]
