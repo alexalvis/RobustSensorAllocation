@@ -11,7 +11,7 @@ import GridWorldV2
 
 def LP(mdp, h, r_d, r_i):
     model = Model()
-    gamma = 1
+    gamma = 0.95
     st_len = len(mdp.statespace)
     act_len_att = len(mdp.A)
     act_len_def = 2
@@ -19,9 +19,9 @@ def LP(mdp, h, r_d, r_i):
     #Attacker and defender actions are binary
     pi1 = [[model.add_var(var_type=BINARY) for i in range(act_len_def)] for j in range(st_len)] #Defender's policy
     pi2 = [[model.add_var(var_type=BINARY) for i in range(act_len_att)] for j in range(st_len)] #Attacker's policy
-    U1 = [model.add_var() for i in range(st_len)] #Defender's utility
-    U2 = [model.add_var() for i in range(st_len)] #Attacker's Utility
-    w1 = [[[model.add_var() for i in range(act_len_att)] for j in range(act_len_def)] for k in range(st_len)] #Defender's replacement
+    U1 = [model.add_var(lb = r_d, ub = 0) for i in range(st_len)] #Defender's utility
+    U2 = [model.add_var(lb = 0, ub = r_i) for i in range(st_len)] #Attacker's Utility
+    w1 = [[[model.add_var(lb = r_d, ub = 0) for i in range(act_len_att)] for j in range(act_len_def)] for k in range(st_len)] #Defender's replacement
     w2 = [[[model.add_var() for i in range(act_len_att)] for j in range(act_len_def)] for k in range(st_len)] #Attacker's replacement
     U = mdp.U
     P = transfer_P(mdp)
@@ -78,24 +78,30 @@ def LP(mdp, h, r_d, r_i):
 
     for i in range(st_len):
         if mdp.statespace[i] in mdp.G:
-            model += U1[i] == -100
-            model += U2[i] == 100
+            model += U1[i] == r_d
+            model += U2[i] == r_i
             for act_def in range(act_len_def):
                 for act_att in range(act_len_att):
-                    model += w1[i][act_def][act_att] == 0
-                    model += w2[i][act_def][act_att] == 0
-    
+                    model += w1[i][act_def][act_att] == r_d * pi1[i][act_def]
+                    model += w2[i][act_def][act_att] == r_i * pi1[i][act_def]
+    result_matrix = np.zeros((st_len, act_len_def, act_len_att))
     status = model.optimize()  # Set the maximal calculation time
     if status == OptimizationStatus.OPTIMAL:
         print("The model objective is:", model.objective_value)
-        # sensorplace = [pi1[i][1].x for i in range(st_len)]
+        sensorplace = [pi1[i][1].x for i in range(st_len)]
+#        for i in range(st_len):
+#            for j in range(act_len_def):
+#                for k in range(act_len_att):
+#                    result_matrix[i][j][k] = w1[i][j][k].x
     elif status == OptimizationStatus.FEASIBLE:
         print('sol.cost {} found, best possible: {}'.format(model.objective_value, model.objective_bound))
     elif status == OptimizationStatus.NO_SOLUTION_FOUND:
         print('no feasible solution found, lower bound is: {}'.format(model.objective_bound))
     else:
         print("The model objective is:", model.objective_value)
-    return model.objective_value
+    return model.objective_value, sensorplace
+def printSection():
+    pass
 
 def transfer_P(mdp):
     st_len = len(mdp.statespace)
@@ -132,11 +138,11 @@ def main():
     h = 2 #Number of sensors allocation
     r_d = -100 #Defender's reward
     r_i = 100 #Attacker's reward
-    DefenderValue = LP(gridworld, h, r_d, r_i)
-    return DefenderValue
+    DefenderValue, result = LP(gridworld, h, r_d, r_i)
+    return DefenderValue, result
 
 if __name__ == "__main__":
-    DefenderValue = main()
+    DefenderValue, result = main()
     
     
                 
