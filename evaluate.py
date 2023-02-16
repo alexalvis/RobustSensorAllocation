@@ -40,17 +40,19 @@ def EvalConstraint(mdp, pi1, pi2, v2):
             if pi2[i][j] == 1:
                 calUti_d = calUti(R_d, pi1, w1, i, j)
                 calUti_i = calUti(R_i, pi1, w2, i, j)
-                if v1[i] - calUti_d > 0:
-                    print("state " + str(i) + " U1 error " + str(v1[i] - calUti_d))
-                if v2[i] != calUti_i:
-                    print("state " + str(i) + " U2 error " + str(v2[i] - calUti_i))
+                print("state is: " + str(i) + " action taken is " + str(j) + " difference is: " + str(v1[i] - calUti_d))
+                # if v1[i] - calUti_d > 0:
+                    # print("state " + str(i) + " U1 error " + str(v1[i] - calUti_d))
+                # if v2[i] != calUti_i:
+                #     print("state " + str(i) + " U2 error " + str(v2[i] - calUti_i))
             else:
                 calUti_d = calUti(R_d, pi1, w1, i, j)
                 calUti_i = calUti(R_i, pi1, w2, i, j)
-                if v1[i] - calUti_d > Z:
-                    print("violation on U1 state: " + str(i))
-                if v2[i] - calUti_i < 0 or v2[i] - calUti_i > Z:
-                    print("violation on U2 state: " + str(i))
+                print("state is: " + str(i) + " action not taken is " + str(j) + " difference is: " + str(v1[i] - calUti_d))
+                # if v1[i] - calUti_d > Z:
+                #     print("violation on U1 state: " + str(i))
+                # if v2[i] - calUti_i < 0 or v2[i] - calUti_i > Z:
+                #     print("violation on U2 state: " + str(i))
     print(w1[9],w2[9])
                 
             

@@ -5,6 +5,7 @@ Created on Fri Feb 10 13:22:47 2023
 @author: hma2
 """
 
+#Single agent case
 from mip import *
 import numpy as np
 import GridWorldV2
@@ -54,6 +55,9 @@ def LP(mdp, h, r_d, r_i):
             for act_att in range(act_len_att):
                 model += U1[i] - xsum(pi1[i][act_def] * R_d[i][act_def][act_att] + gamma * w1[i][act_def][act_att] for act_def in range(act_len_def)) \
                          <= (1- pi2[i][act_att]) * Z
+
+                model += U1[i] - xsum(pi1[i][act_def] * R_d[i][act_def][act_att] + gamma * w1[i][act_def][act_att] for act_def in range(act_len_def)) \
+                         >=(1- pi2[i][act_att]) * -Z
             
                 model += U2[i] - xsum(pi1[i][act_def] * R_i[i][act_def][act_att] + gamma * w2[i][act_def][act_att] for act_def in range(act_len_def)) \
                          <= (1- pi2[i][act_att]) * Z
@@ -100,8 +104,6 @@ def LP(mdp, h, r_d, r_i):
     else:
         print("The model objective is:", model.objective_value)
     return model.objective_value, sensorplace
-def printSection():
-    pass
 
 def transfer_P(mdp):
     st_len = len(mdp.statespace)
