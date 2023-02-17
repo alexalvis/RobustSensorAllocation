@@ -9,16 +9,16 @@ def LP_regretMinimize(num_att, h, Z, mdplist, v_i, r_i, r_d):
     model = Model(solver_name=GRB)
     gamma = 0.95
     mdp = mdplist[0]
-    stlen = len(mdp.statespace)
+    st_len = len(mdp.statespace)
     init = mdplist[0].init
     act_len_att = len(mdp.A)
     act_len_def = 2
     y = model.add_var()  #y is regret
     pi1 = [[model.add_var(var_type=BINARY) for i in range(act_len_def)] for j in range(st_len)]  # Defender's policy
     pi2 = [[[model.add_var(var_type=BINARY) for i in range(act_len_att)] for j in range(st_len)] for att_type in range(num_att)] # Attacker's policy of type i
-    U1 = [[model.add_var(lb=r_d, ub=0) for i in range(st_len)] for att_type in range(num_att)]  # Defender's utility against type i
-    U2 = [[model.add_var(lb=0, ub=r_i) for i in range(st_len)] for att_type in range(num_att)]  # Attacker's Utility
-    w1 = [[[[model.add_var(lb=r_d, ub=0) for i in range(act_len_att)] for j in range(act_len_def)] for k in
+    U1 = [[model.add_var(lb=r_d[att_type], ub=0) for i in range(st_len)] for att_type in range(num_att)]  # Defender's utility against type i
+    U2 = [[model.add_var(lb=0, ub=r_i[att_type]) for i in range(st_len)] for att_type in range(num_att)]  # Attacker's Utility
+    w1 = [[[[model.add_var(lb=r_d[att_type], ub=0) for i in range(act_len_att)] for j in range(act_len_def)] for k in
           range(st_len)] for att_type in range(num_att)]  # Defender's replacement
     w2 = [[[[model.add_var() for i in range(act_len_att)] for j in range(act_len_def)] for k in
           range(st_len)] for att_type in range(num_att)]  # Attacker's replacement
@@ -28,7 +28,7 @@ def LP_regretMinimize(num_att, h, Z, mdplist, v_i, r_i, r_d):
     model.objective = minimize(y)
     #Regret
     for i in range(num_att):
-        model += y >= (xsum(init[j] * U1[i][j] for j in range(stlen)) - v_i[i])
+        model += y >= (xsum(init[j] * U1[i][j] for j in range(st_len)) - v_i[i])
 
     #Sensors can not be placed outside U
     for i in range(st_len):
@@ -71,7 +71,7 @@ def LP_regretMinimize(num_att, h, Z, mdplist, v_i, r_i, r_d):
     # Replacement of w1 and w2
     for att_type in range(num_att):
         mdp = mdplist[att_type]
-        P = transfer_P(mdp)
+        P = sensorallocationGeneral2.transfer_P(mdp)
         for i in range(st_len):
             if mdp.statespace[i] not in mdp.G:
                 for act_def in range(act_len_def):
@@ -89,7 +89,50 @@ def LP_regretMinimize(num_att, h, Z, mdplist, v_i, r_i, r_d):
                             P[i][act_def][act_att][j] * U2[att_type][j] for j in range(st_len)) + Z * (1 - pi1[i][act_def])
                         model += w2[att_type][i][act_def][act_att] >= -Z * pi1[i][act_def]
                         model += w2[att_type][i][act_def][act_att] <= Z * pi1[i][act_def]
+    
+    #Utilities at goal states
+    for att_type in range(num_att):
+        mdp = mdplist[att_type]
+        for i in range(st_len):
+            if mdp.statespace[i] in mdp.G:
+                model += U1[att_type][i] == r_d[att_type]
+                model += U2[att_type][i] == r_i[att_type]
+                for act_def in range(act_len_def):
+                    for act_att in range(act_len_att):
+                        model += w1[att_type][i][act_def][act_att] == r_d[att_type] * pi1[i][act_def]
+                        model += w2[att_type][i][act_def][act_att] == r_i[att_type] * pi1[i][act_def]
+    
+    status = model.optimize()  # Set the maximal calculation time
+    if status == OptimizationStatus.OPTIMAL:
+        print("The model objective is:", model.objective_value)
+        sensorplace = [pi1[i][1].x for i in range(st_len)]
+    elif status == OptimizationStatus.FEASIBLE:
+        print('sol.cost {} found, best possible: {}'.format(model.objective_value, model.objective_bound))
+    elif status == OptimizationStatus.NO_SOLUTION_FOUND:
+        print('no feasible solution found, lower bound is: {}'.format(model.objective_bound))
+    else:
+        print("The model objective is:", model.objective_value)
+    return model.objective_value, sensorplace
 
-
+if __name__ == "__main__":
+    num_att = 2  #Number of attacker types
+    h = 2  #Number of sensor constraints
+    Z = 10000
+    goallist1 = [(1, 4)]
+    goallist2 = [(4, 4)]
+    mdp1 = GridWorldV2.CreateGridWorld(goallist1)
+    mdp2 = GridWorldV2.CreateGridWorld(goallist2)
+    mdp1.ChangeGoalTrans()
+    mdp2.ChangeGoalTrans()
+    mdplist = [mdp1, mdp2]
+    r_dlist = [-100, -95]
+    r_ilist = [100, 95]
+    v_ilist = []
+    sensorConfiglist = []
+    for i in range(num_att):
+        v_i, sensor_i = sensorallocationGeneral2.LP(mdplist[i], h, r_dlist[i], r_ilist[i])
+        v_ilist.append(v_i)
+        sensorConfiglist.append(sensor_i)
+    V_regret, sensor_regret = LP_regretMinimize(num_att, h, Z, mdplist, v_ilist, r_ilist, r_dlist)
 
 
