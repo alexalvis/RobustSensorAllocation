@@ -135,11 +135,12 @@ def AssignReward(G, statespace, actiondef, actionatt, reward):
 
 def main():
     goallist = [(1, 4)]
-    gridworld = GridWorldV2.CreateGridWorld(goallist)
+    goallist2 = [(4, 4)]
+    gridworld = GridWorldV2.CreateGridWorld(goallist2)
     gridworld.ChangeGoalTrans()
     h = 2 #Number of sensors allocation
-    r_d = -100 #Defender's reward
-    r_i = 100 #Attacker's reward
+    r_d = -95 #Defender's reward
+    r_i = 95 #Attacker's reward
     DefenderValue, result = LP(gridworld, h, r_d, r_i)
     return DefenderValue, result
 

@@ -172,10 +172,10 @@ if __name__ == "__main__":
     mdp1 = GridWorldV2.CreateGridWorld(goallist1)
     mdp2 = GridWorldV2.CreateGridWorld(goallist2)
     v1, x1, v_spec_1 = sub_solver(h, m, M, mdp1, 1)
-    v2, x2, v_spec_2 = sub_solver(h, m, M, mdp2, 5)
+    v2, x2, v_spec_2 = sub_solver(h, m, M, mdp2, 0.95)
     mdplist = [mdp1, mdp2]
     vlist = [v1, v2]
-    reward = [3, 5]
+    reward = [1, 0.95]
     regret, x_regret = LP(num_att, h, m, M, mdplist, vlist, reward)
     # x1_count = np.zeros(23)
     # x1_count[2] = 1
