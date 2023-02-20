@@ -127,7 +127,7 @@ def LP_regretMinimize(num_att, h, Z, mdplist, v_i, r_i, r_d):
 if __name__ == "__main__":
     num_att = 2  #Number of attacker types
     h = 2  #Number of sensor constraints
-    Z = 10000
+    Z = 1000
     goallist1 = [(1, 4)]
     goallist2 = [(4, 4)]
     mdp1 = GridWorldV2.CreateGridWorld(goallist1)
