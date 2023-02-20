@@ -23,7 +23,7 @@ def LP(mdp, h, r_d, r_i):
     U1 = [model.add_var(lb = r_d, ub = 0) for i in range(st_len)] #Defender's utility
     U2 = [model.add_var(lb = 0, ub = r_i) for i in range(st_len)] #Attacker's Utility
     w1 = [[[model.add_var(lb = r_d, ub = 0) for i in range(act_len_att)] for j in range(act_len_def)] for k in range(st_len)] #Defender's replacement
-    w2 = [[[model.add_var() for i in range(act_len_att)] for j in range(act_len_def)] for k in range(st_len)] #Attacker's replacement
+    w2 = [[[model.add_var(lb = 0, ub = r_i) for i in range(act_len_att)] for j in range(act_len_def)] for k in range(st_len)] #Attacker's replacement
     U = mdp.U
     P = transfer_P(mdp)
     R_d = AssignReward(mdp.G, mdp.statespace, act_len_def, act_len_att, r_d)

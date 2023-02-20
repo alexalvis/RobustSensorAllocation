@@ -177,10 +177,12 @@ if __name__ == "__main__":
     vlist = [v1, v2]
     reward = [1, 0.95]
     regret, x_regret = LP(num_att, h, m, M, mdplist, vlist, reward)
-    # x1_count = np.zeros(23)
-    # x1_count[2] = 1
-    # x1_count[6] = 1
-    # objectValue, V_spec = evaluate_sensor(mdp1, x1_count, 1)
+    print(x_regret)
+    x1_count = np.zeros(23)
+    x1_count[7] = 1
+    x1_count[15] = 1
+    objectValue, V_spec = evaluate_sensor(mdp2, x1_count, 0.95)
+    print(objectValue - v2)
     
     
     
