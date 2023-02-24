@@ -125,6 +125,7 @@ def LP_regretMinimize(num_att, h, Z, mdplist, v_i, r_i, r_d):
             temp3 += U2[0][i].x * init[i]
             temp4 += U2[1][i].x * init[i]
         print(temp1 - v_i[0], temp2 - v_i[1])
+        print(temp3, temp4)
     elif status == OptimizationStatus.FEASIBLE:
         print('sol.cost {} found, best possible: {}'.format(model.objective_value, model.objective_bound))
     elif status == OptimizationStatus.NO_SOLUTION_FOUND:
