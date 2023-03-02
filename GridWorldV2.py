@@ -93,7 +93,15 @@ class GridWorld:
                 self.stotrans[st][act] = {}
                 self.stotrans[st][act][st] = 1.0
         self.stactst()
-
+        
+    def addIDS(self, idslist):
+        #Add pre-exist IDS
+        for st in idslist:
+            self.IDS.append(st)
+            for act in self.A:
+                self.stotrans[st][act] = {}
+                self.stotrans[st][act]["Sink"] = 1.0  #Use "Sink" first to see if it will have problem
+        self.stactst()
         
     def addBarrier(self, Barrierlist):
         #Add barriers in the world
@@ -103,13 +111,18 @@ class GridWorld:
             
     def addU(self, Ulist):
         for st in Ulist:
-            if st in self.statespace:
+            if st in self.statespace and st not in self.IDS:
                 self.U.append(st)
                 
     def init_dist(self, init_list):
         self.init = np.zeros(len(self.statespace))
         for st in init_list:
             self.init[self.statespace.index(st)] = 1/len(init_list)
+            
+    def init_dist_manual(self, init_list, init_dist):
+        self.init = np.zeros(len(self.statespace))
+        for i in range(len(init_list)):
+            self.init[self.statespace.index(init_list[i])] = init_dist[i]
             
     def ChangeGoalTrans(self):  #The goal transiton is default to be a self loop, use this function to change it to go to Sink State
         for st in self.G:
@@ -118,6 +131,13 @@ class GridWorld:
                 self.stotrans[st][act]["Sink"] = 1.0
         self.stactst()
         
+    def sensor_place(self, result):
+        sensor = []
+        for i in range(len(result)):
+            if result[i] == 1.0:
+                sensor.append(self.statespace[i])
+        return sensor
+    
     def evalueate_sensor():
         #Evaluate session is implemented in MIP part
         pass
@@ -138,10 +158,30 @@ def CreateGridWorld(goallist):
     init_list = [(1, 0)]
     gridworld.init_dist(init_list)
     return gridworld
-   
-    
+
+def CreateGridWorld_V2(init_dist = [0.3, 0.7]):
+    gridworld = GridWorld(8, 8, 0.1)
+    barrierlist = [(0, 4), (1, 1), (2, 2), (3, 2), (3, 6), (4, 5), (5, 0), (5, 7), (6, 3), (6, 4), (6, 5), (7, 1)]
+    gridworld.addBarrier(barrierlist)
+    gridworld.gettrans()
+    IDSlist = [(1, 4), (5, 3)]
+    gridworld.addIDS(IDSlist)
+    Ulist = []
+    for i in range(8):
+        for j in range(2, 6):
+            Ulist.append((i, j)) #2-5 column
+    gridworld.addU(Ulist)
+    goallist_V2 = [(0, 6), (3, 7), (7, 7)]
+    gridworld.addGoal(goallist_V2)
+    init_list = [(2, 0), (6, 0)]
+    # init_dist = [0.3, 0.7]
+    gridworld.init_dist_manual(init_list, init_dist)
+    gridworld.ChangeGoalTrans()
+    return gridworld
+            
     
 if __name__ == "__main__":
     goallist = [(1, 4)]
     gridworld = CreateGridWorld(goallist)
     # gridworld.ChangeGoalTrans()
+    gridworldV2 = CreateGridWorld_V2([0.5, 0.5])

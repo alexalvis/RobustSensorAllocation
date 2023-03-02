@@ -17,13 +17,15 @@ def LP(mdp, h, r_d, r_i):
     act_len_att = len(mdp.A)
     act_len_def = 2
     Z = 100000
+    r_d_min = min(r_d)
+    r_i_max = max(r_i)
     #Attacker and defender actions are binary
     pi1 = [[model.add_var(var_type=BINARY) for i in range(act_len_def)] for j in range(st_len)] #Defender's policy
     pi2 = [[model.add_var(var_type=BINARY) for i in range(act_len_att)] for j in range(st_len)] #Attacker's policy
-    U1 = [model.add_var(lb = r_d, ub = 0) for i in range(st_len)] #Defender's utility
-    U2 = [model.add_var(lb = 0, ub = r_i) for i in range(st_len)] #Attacker's Utility
-    w1 = [[[model.add_var(lb = r_d, ub = 0) for i in range(act_len_att)] for j in range(act_len_def)] for k in range(st_len)] #Defender's replacement
-    w2 = [[[model.add_var(lb = 0, ub = r_i) for i in range(act_len_att)] for j in range(act_len_def)] for k in range(st_len)] #Attacker's replacement
+    U1 = [model.add_var(lb = r_d_min, ub = 0) for i in range(st_len)] #Defender's utility
+    U2 = [model.add_var(lb = 0, ub = r_i_max) for i in range(st_len)] #Attacker's Utility
+    w1 = [[[model.add_var(lb = r_d_min, ub = 0) for i in range(act_len_att)] for j in range(act_len_def)] for k in range(st_len)] #Defender's replacement
+    w2 = [[[model.add_var(lb = 0, ub = r_i_max) for i in range(act_len_att)] for j in range(act_len_def)] for k in range(st_len)] #Attacker's replacement
     U = mdp.U
     P = transfer_P(mdp)
     R_d = AssignReward(mdp.G, mdp.statespace, act_len_def, act_len_att, r_d)
@@ -82,12 +84,12 @@ def LP(mdp, h, r_d, r_i):
 
     for i in range(st_len):
         if mdp.statespace[i] in mdp.G:
-            model += U1[i] == r_d
-            model += U2[i] == r_i
+            model += U1[i] == r_d[mdp.G.index(mdp.statespace[i])]
+            model += U2[i] == r_i[mdp.G.index(mdp.statespace[i])]
             for act_def in range(act_len_def):
                 for act_att in range(act_len_att):
-                    model += w1[i][act_def][act_att] == r_d * pi1[i][act_def]
-                    model += w2[i][act_def][act_att] == r_i * pi1[i][act_def]
+                    model += w1[i][act_def][act_att] == r_d[mdp.G.index(mdp.statespace[i])] * pi1[i][act_def]
+                    model += w2[i][act_def][act_att] == r_i[mdp.G.index(mdp.statespace[i])] * pi1[i][act_def]
     result_matrix = np.zeros((st_len, act_len_def, act_len_att))
     status = model.optimize()  # Set the maximal calculation time
     if status == OptimizationStatus.OPTIMAL:
@@ -128,24 +130,35 @@ def AssignReward(G, statespace, actiondef, actionatt, reward):
             Reward[i][act_d] = {}
             for act_a in range(actionatt):
                 if state in G and act_d == 0:
-                    Reward[i][act_d][act_a] = reward
+                    Reward[i][act_d][act_a] = reward[G.index(state)]
                 else:
                     Reward[i][act_d][act_a] = 0
     return Reward
 
 def main():
-    goallist = [(1, 4)]
+    #5 X 5 gridworld
+    goallist1 = [(1, 4)]
     goallist2 = [(4, 4)]
     gridworld = GridWorldV2.CreateGridWorld(goallist2)
     gridworld.ChangeGoalTrans()
     h = 2 #Number of sensors allocation
-    r_d = -95 #Defender's reward
-    r_i = 95 #Attacker's reward
+    r_d = [-95] #Defender's reward
+    r_i = [95] #Attacker's reward
     DefenderValue, result = LP(gridworld, h, r_d, r_i)
     return DefenderValue, result
 
+def test_gridworldV2():
+    #8 X 8 gridworld
+    gridworld = GridWorldV2.CreateGridWorld_V2()
+    h = 2
+    r_d = [-1.5, -1, -1]
+    r_i = [1.5, 1.2, 1.5]
+    DefenderValue, result = LP(gridworld, h, r_d, r_i)
+    sensor = gridworld.sensor_place(result)
+    return DefenderValue, sensor
+
 if __name__ == "__main__":
-    DefenderValue, result = main()
+    DefenderValue, sensor = test_gridworldV2()
     
     
                 
