@@ -171,8 +171,8 @@ def main_v2():
     num_att = 2
     h = 2
     Z = 10
-    gridworld1 = GridWorldV2.CreateGridWorld_V2([0.3, 0.7])
-    gridworld2 = GridWorldV2.CreateGridWorld_V2([0.3, 0.7])
+    gridworld1 = GridWorldV2.CreateGridWorld_V2([0.7, 0.3])
+    gridworld2 = GridWorldV2.CreateGridWorld_V2([0.7, 0.3])
     mdplist = [gridworld1, gridworld2]
     r_d = [-1.5, -1, -1]
     r_i_1 = [1.5, 1.2, 1.2]
@@ -194,5 +194,9 @@ def main_v2():
 
 if __name__ == "__main__":
     v_i_list, sensorConfiglist, V_regret, sensor_r = main_v2()
+    print(v_i_list)
+    print(sensorConfiglist)
+    print(V_regret)
+    print(sensor_r)
     
 

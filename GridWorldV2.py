@@ -161,10 +161,11 @@ def CreateGridWorld(goallist):
 
 def CreateGridWorld_V2(init_dist = [0.3, 0.7]):
     gridworld = GridWorld(8, 8, 0.1)
-    barrierlist = [(0, 4), (1, 1), (2, 2), (3, 2), (3, 6), (4, 5), (5, 0), (5, 7), (6, 3), (6, 4), (6, 5), (7, 1)]
+    barrierlist = [(0, 4), (1, 1), (3, 2), (3, 6), (4, 5), (5, 0), (5, 7), (6, 3), (6, 4), (6, 5), (7, 1)]
     gridworld.addBarrier(barrierlist)
     gridworld.gettrans()
-    IDSlist = [(1, 4), (5, 3)]
+    # IDSlist = [(1, 4), (5, 3)]
+    IDSlist = []
     gridworld.addIDS(IDSlist)
     Ulist = []
     for i in range(8):
