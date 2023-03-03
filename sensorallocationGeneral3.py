@@ -162,6 +162,7 @@ def main():
         v_i, sensor_i = sensorallocationGeneral2.LP(mdplist[i], h, r_dlist[i], r_ilist[i])
         v_ilist.append(v_i)
         sensorConfiglist.append(sensor_i)
+
     V_regret, sensor_regret = LP_regretMinimize(num_att, h, Z, mdplist, v_ilist, r_ilist, r_dlist)
     print(sensor_regret)
     
@@ -171,11 +172,11 @@ def main_v2():
     h = 2
     Z = 10
     gridworld1 = GridWorldV2.CreateGridWorld_V2([0.3, 0.7])
-    gridworld2 = GridWorldV2.CreateGridWorld_V2([0.7, 0.3])
+    gridworld2 = GridWorldV2.CreateGridWorld_V2([0.3, 0.7])
     mdplist = [gridworld1, gridworld2]
     r_d = [-1.5, -1, -1]
-    r_i_1 = [1.5, 1.2, 1.5]
-    r_i_2 = [1.2, 1.5, 1]
+    r_i_1 = [1.5, 1.2, 1.2]
+    r_i_2 = [1.2, 1.5, 1.5]
     r_d_list = [r_d, r_d]
     r_i_list = [r_i_1, r_i_2]
     v_i_list = []
@@ -185,7 +186,8 @@ def main_v2():
         sensor_p = mdplist[i].sensor_place(sensor_i)
         v_i_list.append(v_i)
         sensorConfiglist.append(sensor_p)
-    print(v_i_list, sensorConfiglist)
+#    v_i_list = [-0.31985, -0.25183]
+#    print(v_i_list, sensorConfiglist)
     V_regret, sensor_regret = LP_regretMinimize(num_att, h, Z, mdplist, v_i_list, r_i_list, r_d_list)
     sensor_r = gridworld1.sensor_place(sensor_regret)
     return v_i_list, sensorConfiglist, V_regret, sensor_r
