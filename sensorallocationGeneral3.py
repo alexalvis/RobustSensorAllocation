@@ -169,14 +169,14 @@ def main():
 def main_v2():
     #8 X 8 gridworld example
     num_att = 2
-    h = 2
-    Z = 10
+    h = 4
+    Z = 100
     gridworld1 = GridWorldV2.CreateGridWorld_V2([0.7, 0.3])
     gridworld2 = GridWorldV2.CreateGridWorld_V2([0.7, 0.3])
     mdplist = [gridworld1, gridworld2]
-    r_d = [-1.5, -1, -1]
-    r_i_1 = [1.5, 1.2, 1.2]
-    r_i_2 = [1.2, 1.5, 1.5]
+    r_d = [-15, -10, -10]
+    r_i_1 = [15, 12, 12]
+    r_i_2 = [12, 15, 15]
     r_d_list = [r_d, r_d]
     r_i_list = [r_i_1, r_i_2]
     v_i_list = []
