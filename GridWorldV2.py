@@ -177,7 +177,7 @@ def CreateGridWorld_V2(init_dist = [0.3, 0.7]):
     init_list = [(2, 0), (6, 0)]
     # init_dist = [0.3, 0.7]
     gridworld.init_dist_manual(init_list, init_dist)
-    gridworld.ChangeGoalTrans()
+#    gridworld.ChangeGoalTrans()  #This is used in general sum case
     return gridworld
             
     

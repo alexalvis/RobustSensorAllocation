@@ -44,7 +44,7 @@ def LP(num_att, h, m, M, mdplist, v_i, r_i):
             #current state: j
             #next state: ns
             if mdp.statespace[j] in mdp.G:
-                model += V[i][j] == r_i[i]
+                model += V[i][j] == r_i[i][mdp.G.index(mdp.statespace[j])]
         
             for a in mdp.A:
                 model += V[i][j] >=  xsum(mdp.stotrans[mdp.statespace[j]][a][ns] * w[i][mdp.stast.index((mdp.statespace[j], a, ns))] for ns in mdp.stotrans[mdp.statespace[j]][a].keys())
@@ -76,7 +76,7 @@ def LP(num_att, h, m, M, mdplist, v_i, r_i):
 def sub_solver(h, m, M, mdp, reward):
     #h number of sensors constraint, m lower bound of big M, M upper bound of big M
     #mdp is the current mdp
-    model = Model(solver_name=CBC)
+    model = Model(solver_name=GRB)
     stlen = len(mdp.statespace)
     init = mdp.init
     gamma = 0.95
@@ -96,7 +96,7 @@ def sub_solver(h, m, M, mdp, reward):
         #current state index: j
         #next state: ns
         if mdp.statespace[j] in mdp.G:
-            model += v[j] == reward
+            model += v[j] == reward[mdp.G.index(mdp.statespace[j])]
         
         for a in mdp.A:
             model += v[j] >=  xsum(gamma * mdp.stotrans[mdp.statespace[j]][a][ns] * w[mdp.stast.index((mdp.statespace[j], a, ns))] 
@@ -152,16 +152,7 @@ def evaluate_sensor(mdp, sensorplace, reward):
     return model.objective_value, V_res
     
     
-def main(k, h, m, M):
-    mdplist = ...
-    v_i = []
-    for mdp in mdplist():
-        v_opt = sub_solver(h, m, M, mdp)
-        v_i.append(v_opt)
-    regret, ids_config = LP(k, h, m, M, mdplist, v_i)
-    return regret, ids_config
-
-if __name__ == "__main__":
+def main():
     num_att = 2  #Number of attacker types
     h = 2  #Number of sensor constraints
     m = -10  #Lower bound of big M method
@@ -171,18 +162,36 @@ if __name__ == "__main__":
     goallist2 = [(4, 4)]
     mdp1 = GridWorldV2.CreateGridWorld(goallist1)
     mdp2 = GridWorldV2.CreateGridWorld(goallist2)
-    v1, x1, v_spec_1 = sub_solver(h, m, M, mdp1, 1)
-    v2, x2, v_spec_2 = sub_solver(h, m, M, mdp2, 0.95)
+    v1, x1, v_spec_1 = sub_solver(h, m, M, mdp1, [1])
+    v2, x2, v_spec_2 = sub_solver(h, m, M, mdp2, [0.95])
     mdplist = [mdp1, mdp2]
     vlist = [v1, v2]
-    reward = [1, 0.95]
+    reward = [[1], [0.95]]
     regret, x_regret = LP(num_att, h, m, M, mdplist, vlist, reward)
     print(x_regret)
-    x1_count = np.zeros(23)
-    x1_count[7] = 1
-    x1_count[15] = 1
-    objectValue, V_spec = evaluate_sensor(mdp2, x1_count, 0.95)
-    print(objectValue - v2)
+#    x1_count = np.zeros(23)
+#    x1_count[7] = 1
+#    x1_count[15] = 1
+#    objectValue, V_spec = evaluate_sensor(mdp2, x1_count, 0.95)
+#    print(objectValue - v2)
+
+def main_2():
+    num_att = 2
+    h = 3
+    m = -100
+    M = 100
+    gridworld1 = GridWorldV2.CreateGridWorld_V2([0.7, 0.3])
+    gridworld2 = GridWorldV2.CreateGridWorld_V2([0.7, 0.3])
+    r_i_1 = [15, 12, 12]
+    r_i_2 = [12, 15, 15]
+    r_i_list = [r_i_1, r_i_2]
+    v1, x1, v_spec_1 = sub_solver(h, m, M, gridworld1, r_i_1)
+    v2, x2, v_spec_2 = sub_solver(h, m, M, gridworld2, r_i_2)
+    mdplist = [gridworld1, gridworld2]
+    vlist = [v1, v2]
+    regret, x_regret = LP(num_att, h, m, M, mdplist, vlist, r_i_list)
+if __name__ == "__main__":
+    main_2()
     
     
     
