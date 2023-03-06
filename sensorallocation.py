@@ -62,7 +62,7 @@ def LP(num_att, h, m, M, mdplist, v_i, r_i):
         print("The model objective is:", model.objective_value)
         x_res = [x[i].x for i in range(stlen)]
         for i in range(num_att):
-            print(xsum(init[j] * V[i][j].x for j in range(stlen)) - v_i[i])
+            print(xsum(init[j] * V[i][j].x for j in range(stlen)))
         # for j in range(stlen):
             # print(V[1][j].x)
     elif status == OptimizationStatus.FEASIBLE:
@@ -132,7 +132,7 @@ def evaluate_sensor(mdp, sensorplace, reward):
     model.objective = minimize(xsum(init[i] * V[i] for i in range(stlen)))
     for i in range(stlen):
         if mdp.statespace[i] in mdp.G:
-            model += V[i] == reward
+            model += V[i] == reward[mdp.G.index(mdp.statespace[i])]
         elif sensorplace[i] == 1:
             model += V[i] == 0
         else:
@@ -177,7 +177,7 @@ def main():
 
 def main_2():
     num_att = 2
-    h = 3
+    h = 2
     m = -100
     M = 100
     gridworld1 = GridWorldV2.CreateGridWorld_V2([0.7, 0.3])
@@ -187,9 +187,13 @@ def main_2():
     r_i_list = [r_i_1, r_i_2]
     v1, x1, v_spec_1 = sub_solver(h, m, M, gridworld1, r_i_1)
     v2, x2, v_spec_2 = sub_solver(h, m, M, gridworld2, r_i_2)
+    print(gridworld1.sensor_place(x1))
+    print(gridworld2.sensor_place(x2))
     mdplist = [gridworld1, gridworld2]
     vlist = [v1, v2]
     regret, x_regret = LP(num_att, h, m, M, mdplist, vlist, r_i_list)
+    print(gridworld1.sensor_place(x_regret))
+    objectiveValue, V_spec = evaluate_sensor(gridworld1, x2, r_i_1)
 if __name__ == "__main__":
     main_2()
     
