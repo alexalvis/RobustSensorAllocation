@@ -50,7 +50,7 @@ def draw_bar_plot():
 
  
     # create a dataset
-    y = [5.9604, 6.1235, 7.0826, 6.5584, 7.0839, 7.4498]
+    y = [5.9604, 6.1235, 7.0826, 6.5584, 7.0389, 7.4498]
     x = ('A', 'B', 'C', 'D', 'E', 'F')
     # x = [0, 1, 2, 3, 4, 5, 6, 7]
     # y = [160, 167, 17, 130, 120, 40, 105, 70]
@@ -61,7 +61,7 @@ def draw_bar_plot():
     plt.xlabel("Attacker's value", fontsize = 16)
     plt.xlim(0, 9)
     plt.yticks(ind, ['Attacker 1 value \n against $\pi_1$', 'Attacker 1 value \n against $\pi_w$', 'Attacker 1 value \n against $\pi_2$', 'Attacker 2 value \n against $\pi_2$', 'Attacker 2 value \n against $\pi_w$', 'Attacker 2 value \n against $\pi_1$'], fontsize = 12)
-    ax.barh(ind, y, width, color=['black', 'red', 'green', 'blue', 'cyan', 'orange'])
+    ax.barh(ind, y, width, color=['blue', 'black', 'cyan', 'red', 'green', 'orange'])
  
     for i, v in enumerate(y):
         ax.text(v+0.35 , i , str(v),

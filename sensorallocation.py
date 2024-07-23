@@ -7,7 +7,8 @@ Created on Mon Jan 30 14:52:29 2023
 
 from mip import *
 import numpy as np
-import GridWorldV2  
+import GridWorldV2
+import time
 
 def LP(num_att, h, m, M, mdplist, v_i, r_i):
     #k number of attackers, h number of sensors constraint
@@ -193,9 +194,66 @@ def main_2():
     vlist = [v1, v2]
     regret, x_regret = LP(num_att, h, m, M, mdplist, vlist, r_i_list)
     print(gridworld1.sensor_place(x_regret))
+    start_time = time.time()
     objectiveValue, V_spec = evaluate_sensor(gridworld1, x2, r_i_1)
+    end_time = time.time()
+    return end_time - start_time
+def main_3():
+    num_att = 3
+    h = 2
+    m = -100
+    M = 100
+    gridworld1 = GridWorldV2.CreateGridWorld_V2([0.7, 0.3])
+    gridworld2 = GridWorldV2.CreateGridWorld_V2([0.7, 0.3])
+    gridworld3 = GridWorldV2.CreateGridWorld_V2([0.7, 0.3])
+    r_i_1 = [15, 12, 12]
+    r_i_2 = [12, 15, 15]
+    r_i_3 = [12, 12, 15]
+    r_i_list = [r_i_1, r_i_2, r_i_3]
+    v1, x1, v_spec_1 = sub_solver(h, m, M, gridworld1, r_i_1)
+    v2, x2, v_spec_2 = sub_solver(h, m, M, gridworld2, r_i_2)
+    v3, x3, v_spec_3 = sub_solver(h, m, M, gridworld3, r_i_3)
+    # print(gridworld1.sensor_place(x1))
+    # print(gridworld2.sensor_place(x2))
+    mdplist = [gridworld1, gridworld2, gridworld3]
+    vlist = [v1, v2, v3]
+    start_time = time.time()
+    regret, x_regret = LP(num_att, h, m, M, mdplist, vlist, r_i_list)
+    end_time = time.time()
+    return end_time - start_time
+
+def main_4():
+    num_att = 4
+    h = 2
+    m = -100
+    M = 100
+    gridworld1 = GridWorldV2.CreateGridWorld_V2([0.7, 0.3])
+    gridworld2 = GridWorldV2.CreateGridWorld_V2([0.7, 0.3])
+    gridworld3 = GridWorldV2.CreateGridWorld_V2([0.7, 0.3])
+    gridworld4 = GridWorldV2.CreateGridWorld_V2([0.7, 0.3])
+    r_i_1 = [15, 12, 12]
+    r_i_2 = [12, 15, 15]
+    r_i_3 = [15, 12, 15]
+    r_i_4 = [12, 12, 15]
+    r_i_list = [r_i_1, r_i_2, r_i_3, r_i_4]
+    v1, x1, v_spec_1 = sub_solver(h, m, M, gridworld1, r_i_1)
+    v2, x2, v_spec_2 = sub_solver(h, m, M, gridworld2, r_i_2)
+    v3, x3, v_spec_3 = sub_solver(h, m, M, gridworld3, r_i_3)
+    v4, x4, v_spec_4 = sub_solver(h, m, M, gridworld3, r_i_4)
+    # print(gridworld1.sensor_place(x1))
+    # print(gridworld2.sensor_place(x2))
+    mdplist = [gridworld1, gridworld2, gridworld3, gridworld4]
+    vlist = [v1, v2, v3, v4]
+    start_time = time.time()
+    regret, x_regret = LP(num_att, h, m, M, mdplist, vlist, r_i_list)
+    end_time = time.time()
+    return end_time - start_time
 if __name__ == "__main__":
-    main_2()
-    
+    time1 = main_2()
+    # time2 = main_3()
+    # time3 = main_4()
+    print(time1)
+    # print(time2)
+    # print(time3)
     
     

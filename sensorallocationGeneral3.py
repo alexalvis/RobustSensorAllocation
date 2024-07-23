@@ -169,7 +169,7 @@ def main():
 def main_v2():
     #8 X 8 gridworld example
     num_att = 2
-    h = 2
+    h = 0
     Z = 100
     gridworld1 = GridWorldV2.CreateGridWorld_V2([0.7, 0.3])
     gridworld2 = GridWorldV2.CreateGridWorld_V2([0.7, 0.3])
